@@ -1,2 +1,5 @@
-assets/
-dist/
+assets/*.gz
+dist/*.gz
+dist/sha*
+dist/*.txt
+__pycache__

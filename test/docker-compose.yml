@@ -1,0 +1,30 @@
+version: '3'
+services:
+  bonsai-server:
+    image: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../dist:/data/www:ro
+    hostname: bonsai-server
+  backend:
+    image: sensu/sensu:latest
+    container_name: test-sensu-backend
+    command: sensu-backend start --state-dir /var/lib/sensu/sensu-backend/etcd
+    ports:
+      - "3000:3000"
+    environment:
+    - SENSU_BACKEND_CLUSTER_ADMIN_USERNAME=admin
+    - SENSU_BACKEND_CLUSTER_ADMIN_PASSWORD=password
+    hostname: sensu-backend1
+    restart: always
+    volumes:
+      - ./sensu-config:/config
+  agent1:
+    image: sensu/sensu:latest
+    command: sensu-agent start --backend-url ws://backend:8081 --subscriptions unix --log-level warn --keepalive-interval 5 --keepalive-timeout 10
+    hostname: agent1
+    restart: always
+    depends_on:
+      - backend
