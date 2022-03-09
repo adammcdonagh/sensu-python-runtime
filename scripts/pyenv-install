@@ -1,4 +1,5 @@
 #!/bin/sh
+export GIT_SSL_NO_VERIFY=true
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
 export PYENV_ROOT="$HOME/.pyenv" && \
 export PATH="$PYENV_ROOT/bin:$PATH"
@@ -25,7 +26,7 @@ fi
 if [ $# != 0 ]; then
   packages=$@
   if [ ! ${packages} == "." ]; then
-    pip install $@
+    pip install $@  --trusted-host pypi.org --trusted-host files.pythonhosted.org
     if [ $? -ne 0 ]; then
       exit 1
     fi

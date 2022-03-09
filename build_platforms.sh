@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# export ROOT_CA to a proxy Root CA before running if there's root CA that needs trusting
+test -e root_ca.pem && export ROOT_CA=root_ca.pem
+
 mkdir -p dist
 mkdir -p assets
 mkdir -p scripts

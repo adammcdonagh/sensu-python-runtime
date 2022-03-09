@@ -15,7 +15,7 @@ fi
 
 proxy_build_args=
 if [ ! -z ${HTTP_PROXY} ]; then
-  proxy_build_args="--build-arg \"HTTP_PROXY=${HTTP_PROXY}\" --build-arg \"HTTPS_PROXY=${HTTPS_PROXY}\""
+  proxy_build_args="--build-arg HTTP_PROXY=${HTTP_PROXY} --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg ROOT_CA=${ROOT_CA}"
 fi
 
 echo "Platform: ${platform}"
@@ -28,7 +28,7 @@ else
   if [[ "$(docker images -q ${asset_image} 2> /dev/null)" == "" ]]; then
     echo "Docker image not found...we can build"
     echo "Building Docker Image: sensu-python-runtime:${python_version}-${platform}"
-    podman build --platform linux/arm64 --build-arg "PYTHON_VERSION=${python_version}" ${proxy_build_args} --build-arg "ASSET_VERSION=${asset_version}" --build-arg "PACKAGES=${packages}" -t ${asset_image} -f Dockerfile.${platform} .
+    docker buildx build --build-arg "PYTHON_VERSION=${python_version}" ${proxy_build_args} --build-arg ASSET_VERSION=${asset_version} --build-arg PACKAGES=${packages} -t ${asset_image} -f Dockerfile.${platform} .
     retval=$?
     if [[ retval -ne 0 ]]; then
       exit $retval
