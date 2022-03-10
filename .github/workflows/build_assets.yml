@@ -3,7 +3,7 @@ name: Build Assets
 on:
   push:
     tags:
-      - "v*.  *"
+      - "v*.*"
 
 jobs:
   build_python_assets:
