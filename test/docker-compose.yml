@@ -28,3 +28,10 @@ services:
     restart: always
     depends_on:
       - backend
+  agent2:
+    image: sensu/sensu-rhel:latest
+    command: sensu-agent start --backend-url ws://backend:8081 --subscriptions unix --log-level warn --keepalive-interval 5 --keepalive-timeout 10
+    hostname: agent2
+    restart: always
+    depends_on:
+      - backend
