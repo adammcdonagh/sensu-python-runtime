@@ -18,9 +18,9 @@ jobs:
 
       - name: Check output
         env:
-          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+          TAG: ${{ steps.vars.outputs.tag }}
         run: |
-          echo $RELEASE_VERSION
+          echo $TAG
           echo ${{ steps.vars.outputs.tag }}
 
       - name: Set up QEMU
