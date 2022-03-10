@@ -10,7 +10,7 @@ fi
 
 . /etc/os-release
 # Ensure tar is installed
-echo $ID_LIKE | grep rhel && echo "Installing tar and gzip" && yum install -y tar gzip >/dev/null
+echo $ID_LIKE | grep rhel && echo "Installing tar and gzip" && update-ca-trust && yum install -y tar gzip >/dev/null
 
 mkdir -p /build
 cd /build
