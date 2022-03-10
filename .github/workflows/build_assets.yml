@@ -34,6 +34,7 @@ jobs:
         with:
           ## limits ssh access and adds the ssh public key for the user which triggered the workflow
           limit-access-to-actor: true
+          limit-access-to-users: adammcdonagh
 
       - name: Build assets
         run: ./build_platforms.sh
