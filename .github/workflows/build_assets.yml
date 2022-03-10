@@ -27,7 +27,7 @@ jobs:
 
       - name: Setup tmate session
         # if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@v3.11
 
       - name: Build assets
         run: ./build_platforms.sh
