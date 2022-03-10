@@ -2,3 +2,7 @@
 ignore = F405,F403,E501
 extend-ignore = W503
 max-line-length = 120
+exclude = 
+  .venv,
+  example/python_asset/bin/example.py, # Ignore Python wrapper that's actually a bash script
+  
