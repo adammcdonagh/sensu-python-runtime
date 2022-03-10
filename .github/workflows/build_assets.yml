@@ -23,12 +23,11 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Sleep...
-        run: sleep 20
+        run: sleep 10
 
       - name: Setup tmate session
         # if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 15
 
       - name: Build assets
         run: ./build_platforms.sh
