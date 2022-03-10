@@ -1,4 +1,4 @@
-name: Python Lint
+name: Build Assets
 
 on:
   push:
@@ -26,6 +26,11 @@ jobs:
         run: ./build_platforms.sh
         env:
           ASSET_VERSION: ${{ steps.tag_name.outputs.SOURCE_TAG }}
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 15
 
       # - uses: actions/checkout@v2
       # - name: Set up Python 3.9
