@@ -20,25 +20,25 @@ for package in ${packages[@]}; do
   fi
 done
 
-# # RHEL platform - Use Alma Linux to simulate RHEL8
-for package in ${packages[@]}; do
-  echo "Building for RHEL and Python packages: ${package}"  
-  platform="rhel" test_platforms="almalinux:latest" packages="${package}" ./build_and_test_platform.sh
-  retval=$?
-  if [[ $retval -ne 0 ]]; then
-    exit $retval
-  fi
-done
+# # # RHEL platform - Use Alma Linux to simulate RHEL8
+# for package in ${packages[@]}; do
+#   echo "Building for RHEL and Python packages: ${package}"  
+#   platform="rhel" test_platforms="almalinux:latest" packages="${package}" ./build_and_test_platform.sh
+#   retval=$?
+#   if [[ $retval -ne 0 ]]; then
+#     exit $retval
+#   fi
+# done
 
-# AMZN2 platform - Amazon Linux 2
-for package in ${packages[@]}; do
-  echo "Building for RHEL and Python packages: ${package}"  
-  platform="amzn2" test_platforms="amazonlinux:latest" packages="${package}" ./build_and_test_platform.sh
-  retval=$?
-  if [[ $retval -ne 0 ]]; then
-    exit $retval
-  fi
-done
+# # AMZN2 platform - Amazon Linux 2
+# for package in ${packages[@]}; do
+#   echo "Building for RHEL and Python packages: ${package}"  
+#   platform="amzn2" test_platforms="amazonlinux:latest" packages="${package}" ./build_and_test_platform.sh
+#   retval=$?
+#   if [[ $retval -ne 0 ]]; then
+#     exit $retval
+#   fi
+# done
 
 exit 0
 
