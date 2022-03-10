@@ -25,9 +25,12 @@ jobs:
       - name: Sleep...
         run: sleep 10
 
-      - name: Setup tmate session
-        # if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3.11
+      # - name: Setup tmate session
+      #   # if: ${{ failure() }}
+      #   uses: mxschmitt/action-tmate@v3.11
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
       - name: Build assets
         run: ./build_platforms.sh
