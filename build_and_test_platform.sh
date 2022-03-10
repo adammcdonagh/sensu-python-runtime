@@ -28,8 +28,8 @@ else
   echo "Check for docker image: ${asset_image}"
   if [[ "$(docker images -q ${asset_image} 2> /dev/null)" == "" ]]; then
     echo "Docker image not found...we can build"
-    echo "Building Docker Image: sensu-python-runtime:${python_version}-${platform}"
-    docker buildx build --build-arg "PYTHON_VERSION=${python_version}" ${proxy_build_args} --build-arg ASSET_VERSION=${asset_version} --build-arg PACKAGES=${packages} -t ${asset_image} -f Dockerfile.${platform} .
+    echo "Building Docker Image: ${asset_image}"
+    docker buildx build --load --build-arg "PYTHON_VERSION=${python_version}" ${proxy_build_args} --build-arg ASSET_VERSION=${asset_version} --build-arg PACKAGES=${packages} -t ${asset_image} -f Dockerfile.${platform} .
     retval=$?
     if [[ $retval -ne 0 ]]; then
       # Delete the image

@@ -11,24 +11,24 @@ mkdir -p scripts
 packages=("." "requests" "boto3")
 
 # Alpine platform
-# for package in ${packages[@]}; do
-#   echo "Building for Alpine and Python packages: ${package}"  
-#   platform="alpine" test_platforms="alpine:latest" packages="${package}" ./build_and_test_platform.sh
-#   retval=$?
-#   if [[ $retval -ne 0 ]]; then
-#     exit $retval
-#   fi
-# done
+for package in ${packages[@]}; do
+  echo "Building for Alpine and Python packages: ${package}"  
+  platform="alpine" test_platforms="alpine:latest" packages="${package}" ./build_and_test_platform.sh
+  retval=$?
+  if [[ $retval -ne 0 ]]; then
+    exit $retval
+  fi
+done
 
 # # RHEL platform - Use Alma Linux to simulate RHEL8
-# for package in ${packages[@]}; do
-#   echo "Building for RHEL and Python packages: ${package}"  
-#   platform="rhel" test_platforms="almalinux:latest" packages="${package}" ./build_and_test_platform.sh
-#   retval=$?
-#   if [[ $retval -ne 0 ]]; then
-#     exit $retval
-#   fi
-# done
+for package in ${packages[@]}; do
+  echo "Building for RHEL and Python packages: ${package}"  
+  platform="rhel" test_platforms="almalinux:latest" packages="${package}" ./build_and_test_platform.sh
+  retval=$?
+  if [[ $retval -ne 0 ]]; then
+    exit $retval
+  fi
+done
 
 # AMZN2 platform - Amazon Linux 2
 for package in ${packages[@]}; do
