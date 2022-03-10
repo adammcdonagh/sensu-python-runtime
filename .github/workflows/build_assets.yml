@@ -40,17 +40,6 @@ jobs:
         env:
           TAG: ${{ steps.vars.outputs.tag }}
 
-      # - uses: actions/checkout@v2
-      # - name: Set up Python 3.9
-      #   uses: actions/setup-python@v2
-      #   with:
-      #     python-version: "3.9"
-      # - name: Run flake8
-      #   uses: julianwachholz/flake8-action@v2
-      #   with:
-      #     checkName: "Python Lint"
-      #     path: "./"
-      #     plugins: flake8-bugbear pep8-naming flake8-use-fstring flake8-black
-      #     config: .flake8
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # TODO: Upload Assets
+
+      # TODO: Populate Sensu with assets

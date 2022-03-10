@@ -4,3 +4,4 @@ dist/sha*
 dist/*.txt
 __pycache__
 root_ca.pem
+.venv
