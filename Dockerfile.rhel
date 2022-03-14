@@ -1,4 +1,4 @@
-FROM almalinux:latest
+FROM almalinux:latest as vanilla
 
 LABEL name="sensu/sensu-python-runtime-rhel"
 ARG ASSET_VERSION=local_build
@@ -13,13 +13,21 @@ ARG GREP_EXCLUDE='(ld.so|ld-linux-x86-64.so|libBrokenLocale.so|libSegFault.so|li
 RUN update-ca-trust && yum update -y && yum install -y curl gcc make bzip2-devel zlib-devel sqlite-devel openssl-devel readline-devel curl tar gzip git
 
 COPY scripts/pyenv-install pyenv-install
-RUN REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/source/anchors/proxy_ca.pem SSL_CERT_DIR=/etc/pki/ca-trust/source/anchors/ ./pyenv-install $PACKAGES
+RUN REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/source/anchors/proxy_ca.pem SSL_CERT_DIR=/etc/pki/ca-trust/source/anchors/ touch test
 
 RUN LIBS=$(find /build/pyenv -type f -executable -exec ldd {} 2>/dev/null \;|  grep "=>" | egrep -v ${GREP_EXCLUDE} | awk '{print $3}'| sort -u ) && \
   for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: $f" && cp $f /build/lib/; fi; done
 
 RUN mkdir /assets/ && \
   export PACKAGES=`[ "${PACKAGES}" != "." ] && echo _with_${PACKAGES} | sed 's/ /_/g' || echo _vanilla` && \
-  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}${PACKAGES}-rhel_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
+  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_vanilla-rhel_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
   tar -czf $SENSU_ASSET -C /build/ .
+ENV PATH=$PATH:/build/bin
+
+FROM vanilla as with_packages
+RUN REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/source/anchors/proxy_ca.pem SSL_CERT_DIR=/etc/pki/ca-trust/source/anchors/ touch packages
+
+RUN if [[ "${PACKAGES}" == "." ]]; then exit 0; else export PACKAGES=`[ "${PACKAGES}" != "." ] && echo _with_${PACKAGES} | sed 's/ /_/g' || echo SKIP` && \
+  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_${PACKAGES}-rhel_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
+  tar -czf $SENSU_ASSET -C /build/ .; fi
 ENV PATH=$PATH:/build/bin

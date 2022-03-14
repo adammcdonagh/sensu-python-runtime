@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:3.8 as vanilla
 
 ARG PYTHON_VERSION=3.9.10
 ARG ASSET_VERSION=local_build
@@ -14,9 +14,9 @@ RUN apk --no-cache add build-base gmp-dev zlib-dev bzip2-dev sqlite-dev gdbm-dev
 
 COPY scripts/pyenv-install pyenv-install
 COPY scripts/binary_shim   binary_shim 
-RUN REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssk/certs ./pyenv-install $PACKAGES
+RUN REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssk/certs ./pyenv-install
 
-
+RUN mkdir -p /build/bin && mkdir -p /build/lib
 RUN LIBS=$(find /build/pyenv -type f -exec ldd {} 2>/dev/null \;|  grep "=>" | grep -v "vdso.so.1" | awk '{print $3}'| sort -u ) && \
   for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: $f" && cp $f /build/lib/; fi; done 
 
@@ -24,8 +24,12 @@ RUN LIBS=$(apk info -L libc6-compat 2>/dev/null |  grep "^lib/lib" | sort -u ) &
   for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: /$f" && cp /$f /build/lib/; fi; done 
 
 RUN mkdir /assets/ && \
-  PACKAGES=`[ "${PACKAGES}" != "." ] && echo _with_${PACKAGES} | sed 's/ /_/g' || echo _vanilla` && \
-  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}${PACKAGES}-alpine_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
+  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_vanilla-alpine_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
   tar -czf $SENSU_ASSET -C /build/ .
 
-#ENV PATH=$PATH:/build/bin
+FROM vanilla as with_packages
+RUN if [[ "${PACKAGES}" == "." ]]; then exit 0; else \
+  REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssk/certs ./pyenv-install ${PACKAGES} \
+  PACKAGES=`echo _with_${PACKAGES} | sed 's/ /_/g'` && \
+  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}${PACKAGES}-alpine_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
+  tar -czf $SENSU_ASSET -C /build/ .; fi

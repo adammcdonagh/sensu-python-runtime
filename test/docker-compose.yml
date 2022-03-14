@@ -7,31 +7,34 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ../dist:/data/www:ro
-    hostname: bonsai-server
+    hostname: bonsai-server.local
   backend:
     image: sensu/sensu:latest
-    container_name: test-sensu-backend
-    command: sensu-backend start --state-dir /var/lib/sensu/sensu-backend/etcd
+    command: sensu-backend start --state-dir /var/lib/sensu/sensu-backend --log-level debug
     ports:
       - "3000:3000"
+      - "8080:8080"
+      - "8081:8081"
     environment:
     - SENSU_BACKEND_CLUSTER_ADMIN_USERNAME=admin
     - SENSU_BACKEND_CLUSTER_ADMIN_PASSWORD=password
-    hostname: sensu-backend1
+    hostname: backend1.local
     restart: always
     volumes:
       - ./sensu-config:/config
   agent1:
     image: sensu/sensu:latest
-    command: sensu-agent start --backend-url ws://backend:8081 --subscriptions unix --log-level warn --keepalive-interval 5 --keepalive-timeout 10
-    hostname: agent1
+    command: sensu-agent start --backend-url ws://backend1.local:8081 --subscriptions unix --log-level warn --keepalive-interval 5 --keepalive-timeout 10
+    hostname: agent1.local
+    platform: linux/amd64
     restart: always
     depends_on:
       - backend
   agent2:
     image: sensu/sensu-rhel:latest
-    command: sensu-agent start --backend-url ws://backend:8081 --subscriptions unix --log-level warn --keepalive-interval 5 --keepalive-timeout 10
-    hostname: agent2
+    command: sensu-agent start --backend-url ws://backend1.local:8081 --subscriptions unix --log-level warn --keepalive-interval 5 --keepalive-timeout 10 --log-level debug
+    hostname: agent2.local
+    platform: linux/amd64
     restart: always
     depends_on:
       - backend

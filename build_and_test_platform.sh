@@ -29,7 +29,7 @@ else
   if [[ "$(docker images -q ${asset_image} 2> /dev/null)" == "" ]]; then
     echo "Docker image not found...we can build"
     echo "Building Docker Image: ${asset_image}"
-    docker buildx build --load --build-arg "PYTHON_VERSION=${python_version}" ${proxy_build_args} --build-arg ASSET_VERSION=${asset_version} --build-arg PACKAGES=${packages} -t ${asset_image} -f Dockerfile.${platform} .
+    docker buildx build --platform linux/amd64 --load --build-arg "PYTHON_VERSION=${python_version}" ${proxy_build_args} --build-arg ASSET_VERSION=${asset_version} --build-arg PACKAGES=${packages} -t ${asset_image} -f Dockerfile.${platform} .
     retval=$?
     if [[ $retval -ne 0 ]]; then
       # Delete the image
@@ -54,7 +54,7 @@ for test_platform in "${test_arr[@]}"; do
   docker container list --all -f name=python_runtime_platform_test | grep python_runtime_platform_test && docker container rm python_runtime_platform_test
 
   echo "Test: ${test_platform}"
-  docker run --rm --name python_runtime_platform_test -e platform=${platform} -e test_platform=${test_platform} -e asset_filename=${asset_filename} -v "$PWD/tests/:/tests" -v "$PWD/dist:/dist" ${cert_mount} ${test_platform} /tests/test.sh ${packages}
+  docker run --platform linux/amd64 --rm --name python_runtime_platform_test -e platform=${platform} -e test_platform=${test_platform} -e asset_filename=${asset_filename} -v "$PWD/tests/:/tests" -v "$PWD/dist:/dist" ${cert_mount} ${test_platform} /tests/test.sh ${packages}
   retval=$?
   if [ $retval -ne 0 ]; then
     echo "!!! Error testing ${asset_filename} on ${test_platform}"
