@@ -22,6 +22,7 @@ fi
 proxy_build_args=
 if [ ! -z ${HTTP_PROXY} ]; then
   proxy_build_args="--build-arg HTTP_PROXY=${HTTP_PROXY} --build-arg HTTPS_PROXY=${HTTPS_PROXY} --build-arg ROOT_CA=${ROOT_CA}"
+  proxy_test_args="-e HTTP_PROXY=${HTTP_PROXY} -e HTTPS_PROXY=${HTTPS_PROXY} -e http_proxy=${HTTP_PROXY} -e https_proxy=${HTTPS_PROXY}"
   cert_mount="-v ${PWD}/${ROOT_CA}:/etc/pki/ca-trust/source/anchors/proxy_ca.pem"
 fi
 
@@ -59,7 +60,7 @@ for test_platform in "${test_arr[@]}"; do
   docker container list --all -f name=python_runtime_platform_test | grep python_runtime_platform_test && docker container rm python_runtime_platform_test
 
   echo "Test: ${test_platform}"
-  docker run --rm --name python_runtime_platform_test -e python_version=${python_version} -e platform=${platform} -e test_platform=${test_platform} -e asset_version=${asset_version} -v "$PWD/tests/:/tests" -v "$PWD/dist:/dist" ${cert_mount} ${test_platform} /tests/test.sh ${packages}
+  docker run --rm --name python_runtime_platform_test ${proxy_test_args} -e python_version=${python_version} -e platform=${platform} -e test_platform=${test_platform} -e asset_version=${asset_version} -v "$PWD/tests/:/tests" -v "$PWD/dist:/dist" ${cert_mount} ${test_platform} /tests/test.sh ${packages}
   retval=$?
   if [ $retval -ne 0 ]; then
     echo "!!! Error testing ${asset_filename} on ${test_platform}"
