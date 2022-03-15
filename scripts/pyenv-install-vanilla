@@ -1,0 +1,44 @@
+#!/bin/sh -x
+# Builds a basic vanilla build of Python
+
+export GIT_SSL_NO_VERIFY=true
+git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
+export PYENV_ROOT="$HOME/.pyenv" && \
+export PATH="$PYENV_ROOT/bin:$PATH"
+# ~Check clone worked OK
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+# Set up pyenv and install the version of Python required
+eval "$(pyenv init -)" 
+pyenv install ${PYTHON_VERSION}
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+# Load the Python env into the shell
+eval "$(pyenv init --path)" 
+pyenv shell ${PYTHON_VERSION}
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+# Prepare the build directories
+cd /
+mkdir -p build/bin
+mkdir -p build/lib
+cp -r $PYENV_ROOT build/pyenv
+cd build/bin
+ln -s ../pyenv/versions/${PYTHON_VERSION}/bin/python python
+ln -s ../pyenv/versions/${PYTHON_VERSION}/bin/pip pip
+
+export ARCH=`uname -m`
+
+mkdir -p /build/bin && mkdir -p /build/lib
+
+/copy-libs
+
+mkdir /assets/ && \
+  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_vanilla-${PLATFORM}_$(uname -s | tr '[:upper:]' '[:lower:]')_${ARCH}.tar.gz" && \
+  tar -czf $SENSU_ASSET -C /build/ . && rm -rf /build

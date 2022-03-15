@@ -1,0 +1,14 @@
+#!/bin/sh
+
+
+if [[ $PLATFORM == "alpine"]]; then
+  LIBS=$(find /build/pyenv -type f -exec ldd {} 2>/dev/null \;|  grep "=>" | grep -v "vdso.so.1" | awk '{print $3}'| sort -u ) && \
+    for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: $f" && cp $f /build/lib/; fi; done 
+
+  LIBS=$(apk info -L libc6-compat 2>/dev/null |  grep "^lib/lib" | sort -u ) && \
+    for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: /$f" && cp /$f /build/lib/; fi; done 
+
+elif [[ $PLATFORM == "rhel" || $PLATFORM == "alpinelinux" ]]; then
+  LIBS=$(find /build/pyenv -type f -executable -exec ldd {} 2>/dev/null \;|  grep "=>" | egrep -v ${GREP_EXCLUDE} | awk '{print $3}'| sort -u ) && \
+    for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: $f" && cp $f /build/lib/; fi; done
+fi
