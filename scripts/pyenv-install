@@ -1,56 +1,57 @@
-#!/bin/sh
-export GIT_SSL_NO_VERIFY=true
-git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
-export PYENV_ROOT="$HOME/.pyenv" && \
-export PATH="$PYENV_ROOT/bin:$PATH"
-# ~Check clone worked OK
-if [ $? -ne 0 ]; then
-  exit 1
-fi
+#!/bin/bash -x
 
-# Set up pyenv and install the version of Python required
-eval "$(pyenv init -)" 
-pyenv install ${PYTHON_VERSION}
-if [ $? -ne 0 ]; then
-  exit 1
-fi
+# Assumes we have already installed Python successfully, and
+# installs additional python pacakges
+
+export PYENV_ROOT="$HOME/.pyenv" && \
+export PATH="$PYENV_ROOT/bin:$PATH" && \
+export PYENV_VERSION=${PYTHON_VERSION}
 
 # Load the Python env into the shell
+eval "$(pyenv init -)" 
 eval "$(pyenv init --path)" 
 pyenv shell ${PYTHON_VERSION}
 if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Install any additional modules
-if [ $# != 0 ]; then
-  packages=$@
-  if [ ! ${packages} == "." ]; then
-    pip install $@  --trusted-host pypi.org --trusted-host files.pythonhosted.org
+echo $1 | base64 -d | sed -n 1'p' | tr ',' '\n' | while read packages; do 
+  echo "Installing packages: ${packages}"
+  install_package=$packages
+  
+  pip install ${install_package}  --trusted-host pypi.org --trusted-host files.pythonhosted.org
+
+  # Prepare the build directories
+  cd /
+  mkdir -p build/bin
+  mkdir -p build/lib
+  cp -r $PYENV_ROOT build/pyenv
+  cd build/bin
+  ln -s ../pyenv/versions/${PYTHON_VERSION}/bin/python python
+  ln -s ../pyenv/versions/${PYTHON_VERSION}/bin/pip pip
+
+  # Validate packages have been installed
+  for package in "${install_package}"; do
+    pip show ${package} || (>&2 echo "Failed to find package"; exit 1)
     if [ $? -ne 0 ]; then
       exit 1
     fi
-  fi
-fi
+  done
 
-# Prepare the build directories
-cd /
-mkdir -p build/bin
-mkdir -p build/lib
-cp -r $PYENV_ROOT build/pyenv
-cd build/bin
-ln -s ../pyenv/versions/${PYTHON_VERSION}/bin/python python
-ln -s ../pyenv/versions/${PYTHON_VERSION}/bin/pip pip
+  # Create the build package
+  export ARCH=`uname -m`
 
-# Validate packages have been installed
-if [ $# != 0 ]; then
-  packages=$@
-  if [ ! ${packages} == "." ]; then
-    for package in "${packages}"; do
-      pip show ${package} || (>&2 echo "Failed to find package"; exit 1)
-      if [ $? -ne 0 ]; then
-        exit 1
-      fi
-    done
-  fi
-fi
+  mkdir -p /build/bin && mkdir -p /build/lib
+
+  /copy-libs
+
+  install_package_no_space=`echo ${install_package} | sed 's/ /_/g'`
+  
+  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_with_${install_package_no_space}-${PLATFORM}_$(uname -s | tr '[:upper:]' '[:lower:]')_${ARCH}.tar.gz" 
+  tar -czf $SENSU_ASSET -C /build/ . && cd / && rm -rf /build
+
+  # Tidy up ready for the next package
+  cd /
+  pip uninstall -y ${install_package}
+
+done

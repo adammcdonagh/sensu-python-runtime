@@ -1,33 +1,22 @@
-FROM almalinux:latest as vanilla
+FROM almalinux:latest
 
 LABEL name="sensu/sensu-python-runtime-rhel"
 ARG ASSET_VERSION=local_build
 ARG PYTHON_VERSION=3.9.10
 ARG PACKAGES=
 ARG ROOT_CA=
+ARG PLATFORM=
 
 COPY ${ROOT_CA} /etc/pki/ca-trust/source/anchors/proxy_ca.pem
 
 ARG GREP_EXCLUDE='(ld.so|ld-linux-x86-64.so|libBrokenLocale.so|libSegFault.so|libanl.so|libc.so|libdl.so|libm.so|libmvec.so|libnss_compat.so|libnss_dns.so|libnss_files.so|libpthread.so|libresolv.so|librt.so|libthread_db.so|libutil.so|vdso.so)'
 
-RUN update-ca-trust && yum update -y && yum install -y curl gcc make bzip2-devel zlib-devel sqlite-devel openssl-devel readline-devel curl tar gzip git
+RUN update-ca-trust && yum update -y && yum install -y curl gcc make bzip2-devel zlib-devel sqlite-devel openssl-devel readline-devel curl tar gzip git bash
 
-COPY scripts/pyenv-install pyenv-install
-RUN REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/source/anchors/proxy_ca.pem SSL_CERT_DIR=/etc/pki/ca-trust/source/anchors/ touch test
+COPY scripts/pyenv-install-vanilla pyenv-install-vanilla
+COPY scripts/pyenv-install         pyenv-install
+COPY scripts/copy-libs             copy-libs 
+COPY scripts/binary_shim           binary_shim 
 
-RUN LIBS=$(find /build/pyenv -type f -executable -exec ldd {} 2>/dev/null \;|  grep "=>" | egrep -v ${GREP_EXCLUDE} | awk '{print $3}'| sort -u ) && \
-  for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: $f" && cp $f /build/lib/; fi; done
-
-RUN mkdir /assets/ && \
-  export PACKAGES=`[ "${PACKAGES}" != "." ] && echo _with_${PACKAGES} | sed 's/ /_/g' || echo _vanilla` && \
-  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_vanilla-rhel_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
-  tar -czf $SENSU_ASSET -C /build/ .
-ENV PATH=$PATH:/build/bin
-
-FROM vanilla as with_packages
-RUN REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/source/anchors/proxy_ca.pem SSL_CERT_DIR=/etc/pki/ca-trust/source/anchors/ touch packages
-
-RUN if [[ "${PACKAGES}" == "." ]]; then exit 0; else export PACKAGES=`[ "${PACKAGES}" != "." ] && echo _with_${PACKAGES} | sed 's/ /_/g' || echo SKIP` && \
-  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_${PACKAGES}-rhel_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
-  tar -czf $SENSU_ASSET -C /build/ .; fi
-ENV PATH=$PATH:/build/bin
+RUN REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssl/certs ./pyenv-install-vanilla
+RUN REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssl/certs ./pyenv-install ${PACKAGES}

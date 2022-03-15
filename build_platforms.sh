@@ -7,38 +7,32 @@ mkdir -p dist
 mkdir -p assets
 mkdir -p scripts
 
-# Blank space is intentional!
-packages=("." "requests" "boto3")
+# comma separated list of package groups
+packages=`echo "requests,requests boto3,bofhexcuse" | base64`
 
 # Alpine platform
-for package in ${packages[@]}; do
-  echo "Building for Alpine and Python packages: ${package}"  
-  platform="alpine" test_platforms="alpine:latest" packages="${package}" ./build_and_test_platform.sh
-  retval=$?
-  if [[ $retval -ne 0 ]]; then
-    exit $retval
-  fi
-done
+echo "Building for Alpine and Python packages: ${packages}"  
+platform="alpine" test_platforms="alpine:latest" ./build_and_test_platform.sh $packages
+retval=$?
+if [[ $retval -ne 0 ]]; then
+  exit $retval
+fi
 
-# # RHEL platform - Use Alma Linux to simulate RHEL8
-# for package in ${packages[@]}; do
-#   echo "Building for RHEL and Python packages: ${package}"  
-#   platform="rhel" test_platforms="almalinux:latest" packages="${package}" ./build_and_test_platform.sh
-#   retval=$?
-#   if [[ $retval -ne 0 ]]; then
-#     exit $retval
-#   fi
-# done
+# RHEL platform - Use Alma Linux to simulate RHEL8
+echo "Building for RHEL and Python packages: ${packages}"  
+platform="rhel" test_platforms="almalinux:latest" ./build_and_test_platform.sh ${packages}
+retval=$?
+if [[ $retval -ne 0 ]]; then
+  exit $retval
+fi
 
-# # AMZN2 platform - Amazon Linux 2
-# for package in ${packages[@]}; do
-#   echo "Building for RHEL and Python packages: ${package}"  
-#   platform="amzn2" test_platforms="amazonlinux:latest" packages="${package}" ./build_and_test_platform.sh
-#   retval=$?
-#   if [[ $retval -ne 0 ]]; then
-#     exit $retval
-#   fi
-# done
+# AMZN2 platform - Amazon Linux 2
+echo "Building for RHEL and Python packages: ${packages}"  
+platform="amzn2" test_platforms="amazonlinux:latest" ./build_and_test_platform.sh ${packages}
+retval=$?
+if [[ $retval -ne 0 ]]; then
+  exit $retval
+fi
 
 exit 0
 

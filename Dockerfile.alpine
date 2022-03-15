@@ -1,35 +1,24 @@
-FROM alpine:3.8 as vanilla
+FROM alpine:latest
 
 ARG PYTHON_VERSION=3.9.10
 ARG ASSET_VERSION=local_build
 LABEL name="sensu/sensu-python-runtime-alpine"
 ARG PACKAGES=
 ARG ROOT_CA=
+ARG PLATFORM=
 
 COPY ${ROOT_CA} /etc/ssl/certs/proxy_ca.pem
 
+# Switch APK repos to use http due to proxy issues
+RUN sed -i 's/https/http/' /etc/apk/repositories && cat /etc/ssl/certs/proxy_ca.pem >> /etc/ssl/certs/ca-certificates.crt
 RUN apk --no-cache add build-base gmp-dev zlib-dev bzip2-dev sqlite-dev gdbm-dev db-dev readline-dev libffi-dev coreutils yaml-dev linux-headers autoconf \
   openssh-client openssl-dev libc6-compat \
   wget git sudo bash
 
-COPY scripts/pyenv-install pyenv-install
-COPY scripts/binary_shim   binary_shim 
-RUN REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssk/certs ./pyenv-install
+COPY scripts/pyenv-install-vanilla pyenv-install-vanilla
+COPY scripts/pyenv-install         pyenv-install
+COPY scripts/copy-libs             copy-libs 
+COPY scripts/binary_shim           binary_shim 
 
-RUN mkdir -p /build/bin && mkdir -p /build/lib
-RUN LIBS=$(find /build/pyenv -type f -exec ldd {} 2>/dev/null \;|  grep "=>" | grep -v "vdso.so.1" | awk '{print $3}'| sort -u ) && \
-  for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: $f" && cp $f /build/lib/; fi; done 
-
-RUN LIBS=$(apk info -L libc6-compat 2>/dev/null |  grep "^lib/lib" | sort -u ) && \
-  for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: /$f" && cp /$f /build/lib/; fi; done 
-
-RUN mkdir /assets/ && \
-  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_vanilla-alpine_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
-  tar -czf $SENSU_ASSET -C /build/ .
-
-FROM vanilla as with_packages
-RUN if [[ "${PACKAGES}" == "." ]]; then exit 0; else \
-  REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssk/certs ./pyenv-install ${PACKAGES} \
-  PACKAGES=`echo _with_${PACKAGES} | sed 's/ /_/g'` && \
-  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}${PACKAGES}-alpine_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" && \
-  tar -czf $SENSU_ASSET -C /build/ .; fi
+RUN REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssl/certs ./pyenv-install-vanilla
+RUN REQUESTS_CA_BUNDLE=/etc/ssl/certs/proxy_ca.pem SSL_CERT_DIR=/etc/ssl/certs ./pyenv-install ${PACKAGES}
