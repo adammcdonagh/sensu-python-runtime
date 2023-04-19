@@ -1,0 +1,76 @@
+name: Build Python Runtimes
+
+on:
+  push:
+    tags:
+      - "v*.*"
+
+env:
+  PYTHON_VERSION: "3.11.2"
+
+jobs:
+  setup_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        # Read the contents of the matrix.json file into the matrix variable
+        run: |
+          matrix=$(jq -Mc . matrix.json)
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+  job2:
+    needs: setup_matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ fromJSON(needs.setup_matrix.outputs.matrix).platform }}
+        package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
+    env:
+      NATIVE_ARCH: "amd64"
+    steps:
+      - id: set-derived-env-vars
+        run: |
+          echo "ARCH=$(echo ${{ matrix.platform }} | cut -d'-' -f2)" >> $GITHUB_ENV
+          echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | cut -d'-' -f1)" >> $GITHUB_ENV
+          ASSET_VERSION=${GITHUB_REF_NAME:-local}
+          echo "ASSET_VERSION=${ASSET_VERSION}" >> $GITHUB_ENV
+      - id: set-asset-image-name
+        run: |
+          echo "ASSET_IMAGE_NAME=sensu-python-runtime-${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}:${{ env.ASSET_VERSION }}" >> $GITHUB_ENV
+      - id: show-matrix
+        run: |
+          echo ${{ matrix.package_group.group_name }}
+          echo ${{ join(matrix.package_group.packages, ',') }}
+      # - name: Build image (if arch matches native)
+      #   if: ${{ env.ARCH == env.NATIVE_ARCH }}
+      #   shell: bash
+      #   run: |
+      #     docker build --build-arg "PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg ${{ env.ASSET_VERSION }} \
+      #       --build-arg PACKAGES="${{ join(matrix.package_group.packages, ' ') }}" \
+      #       -t ${{ env.ASSET_IMAGE_NAME }} \
+      #       -f Dockerfile.${{ env.PLATFORM_NAME }} .
+      - name: Set up QEMU # emulated architecture
+        if: ${{ env.ARCH != env.NATIVE_ARCH }}
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/${{ inputs.arch }}
+      - name: Set up Docker Buildx # emulated architecture
+        uses: docker/setup-buildx-action@v2
+        with:
+          platforms: linux/${{ env.ARCH }}
+      - name: Build image # emulated architecture
+        uses: docker/build-push-action@v4
+        with:
+          platforms: linux/${{ env.ARCH }}
+          push: false
+          tags: ${{ env.ASSET_IMAGE_NAME }}
+          file: Dockerfile.${{ env.PLATFORM_NAME }}
+          context: .
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            ASSET_VERSION=${{ env.ASSET_VERSION }}
+            PACKAGES=${{ join(matrix.package_group.packages, ',') }}
+      - name: Copy assets
+        run: |
+          docker run --rm -v ${PWD}/dist:/dist ${{ env.ASSET_IMAGE_NAME }} sh -c "cp /assets/* /dist/"

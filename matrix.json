@@ -1,0 +1,9 @@
+{
+  "platform": ["alpine-amd64"],
+  "python_package_groups": [
+    {
+      "group_name": "requests",
+      "packages": ["requests"]
+    }
+  ]
+}
