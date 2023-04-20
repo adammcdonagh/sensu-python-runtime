@@ -9,37 +9,37 @@ jobs:
   build_python_assets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      # - uses: actions/checkout@v2
 
-      - name: Tag
-        id: vars
-        run: |
-          echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      # - name: Tag
+      #   id: vars
+      #   run: |
+      #     echo ::set-output name=tag::${GITHUB_REF#refs/*/}
 
-      - name: Check output
-        env:
-          TAG: ${{ steps.vars.outputs.tag }}
-        run: |
-          echo $TAG
+      # - name: Check output
+      #   env:
+      #     TAG: ${{ steps.vars.outputs.tag }}
+      #   run: |
+      #     echo $TAG
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v1
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v1
 
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        if: ${{ failure() }}
-        with:
-          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
-          limit-access-to-actor: true
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
+      #   if: ${{ failure() }}
+      #   with:
+      #     ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+      #     limit-access-to-actor: true
 
-      - name: Build assets
-        run: ./build_platforms.sh && ./checksum.sh
-        env:
-          TAG: ${{ steps.vars.outputs.tag }}
+      # - name: Build assets
+      #   run: ./build_platforms.sh && ./checksum.sh
+      #   env:
+      #     TAG: ${{ steps.vars.outputs.tag }}
 
-      # TODO: Upload Assets
+      # # TODO: Upload Assets
 
-      # TODO: Populate Sensu with assets
+      # # TODO: Populate Sensu with assets
