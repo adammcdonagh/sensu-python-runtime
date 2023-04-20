@@ -1,7 +1,7 @@
 #!/bin/sh -x
 
 
-if [[ $PLATFORM == "alpine"]]; then
+if [[ $PLATFORM == "alpine" ]]; then
   LIBS=$(find /build/pyenv -type f -exec ldd {} 2>/dev/null \;|  grep "=>" | grep -v "vdso.so.1" | awk '{print $3}'| sort -u ) && \
     for f in $LIBS; do if [ -e $f ]; then echo "Copying Library: $f" && cp $f /build/lib/; fi; done
 

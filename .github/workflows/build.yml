@@ -19,7 +19,7 @@ jobs:
         run: |
           matrix=$(jq -Mc . matrix.json)
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
-  job2:
+  build:
     needs: setup_matrix
     runs-on: ubuntu-latest
     strategy:
@@ -28,6 +28,7 @@ jobs:
         package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
     env:
       NATIVE_ARCH: "amd64"
+      docker_image: ${{ fromJSON(needs.setup_matrix.outputs.matrix).docker_image }}
     steps:
       - id: set-derived-env-vars
         run: |
@@ -42,35 +43,44 @@ jobs:
         run: |
           echo ${{ matrix.package_group.group_name }}
           echo ${{ join(matrix.package_group.packages, ',') }}
-      # - name: Build image (if arch matches native)
-      #   if: ${{ env.ARCH == env.NATIVE_ARCH }}
-      #   shell: bash
+      # - name: Set up QEMU # emulated architecture
+      #   if: ${{ env.ARCH != env.NATIVE_ARCH }}
+      #   uses: docker/setup-qemu-action@v2
+      #   with:
+      #     platforms: linux/${{ inputs.arch }}
+      # - name: Set up Docker Buildx # emulated architecture
+      #   uses: docker/setup-buildx-action@v2
+      #   with:
+      #     platforms: linux/${{ env.ARCH }}
+      # - name: Build image
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     platforms: linux/${{ env.ARCH }}
+      #     push: false
+      #     tags: ${{ env.ASSET_IMAGE_NAME }}
+      #     file: Dockerfile.${{ env.PLATFORM_NAME }}
+      #     context: .
+      #     build-args: |
+      #       PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+      #       PLATFORM=${{ env.PLATFORM_NAME }}
+      #       ASSET_VERSION=${{ env.ASSET_VERSION }}
+      #       PACKAGES=${{ join(matrix.package_group.packages, ',') }}
+      #     outputs: type=docker,dest=/tmp/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}.tar
+      # - name: Load image
       #   run: |
-      #     docker build --build-arg "PYTHON_VERSION=${{ env.PYTHON_VERSION }} --build-arg ${{ env.ASSET_VERSION }} \
-      #       --build-arg PACKAGES="${{ join(matrix.package_group.packages, ' ') }}" \
-      #       -t ${{ env.ASSET_IMAGE_NAME }} \
-      #       -f Dockerfile.${{ env.PLATFORM_NAME }} .
-      - name: Set up QEMU # emulated architecture
-        if: ${{ env.ARCH != env.NATIVE_ARCH }}
-        uses: docker/setup-qemu-action@v2
+      #     docker load --input /tmp/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}.tar
+      # - name: Extract assets
+      #   run: |
+      #     docker run --rm -v ${PWD}/dist:/dist ${{ env.ASSET_IMAGE_NAME }} sh -c "cp /assets/* /dist/"
+      # - name: Test assets
+      #   run: |
+      #     docker run --rm -e python_version=${{ env.PYTHON_VERSION }} -e platform=${{ env.PLATFORM_NAME }} \
+      #       -e test_platform=${{ env.docker_image }} -e asset_version=${{ env.ASSET_VERSION }} -v "${PWD}/tests/:/tests" -v "${PWD}/dist:/dist" \
+      #       ${{ env.ASSET_IMAGE_NAME }} /tests/test.sh ${{ join(matrix.package_group.packages, ',') }}
+      - name: Upload asset artifact
+        if: ${{ !env.ACT }} # Skip step if running locally
+        uses: actions/upload-artifact@v3
         with:
-          platforms: linux/${{ inputs.arch }}
-      - name: Set up Docker Buildx # emulated architecture
-        uses: docker/setup-buildx-action@v2
-        with:
-          platforms: linux/${{ env.ARCH }}
-      - name: Build image # emulated architecture
-        uses: docker/build-push-action@v4
-        with:
-          platforms: linux/${{ env.ARCH }}
-          push: false
-          tags: ${{ env.ASSET_IMAGE_NAME }}
-          file: Dockerfile.${{ env.PLATFORM_NAME }}
-          context: .
-          build-args: |
-            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
-            ASSET_VERSION=${{ env.ASSET_VERSION }}
-            PACKAGES=${{ join(matrix.package_group.packages, ',') }}
-      - name: Copy assets
-        run: |
-          docker run --rm -v ${PWD}/dist:/dist ${{ env.ASSET_IMAGE_NAME }} sh -c "cp /assets/* /dist/"
+          name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
+          path: dist/*.tar.gz
+          retention-days: 7

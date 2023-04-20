@@ -43,6 +43,13 @@ echo $1 | tr ',' '\n' | while read packages; do
 
   mkdir -p /build/bin && mkdir -p /build/lib
 
+  # Clean up test files that we don't need
+  PYTHON_TEST_DIR=$(find /build/pyenv/versions/${PYTHON_VERSION} -name test -maxdepth 3)
+  rm -rf $PYTHON_TEST_DIR
+
+  # Find and delete any __pycache__ directories under /build
+  find /build -name __pycache__ -type d -exec rm -rf {} +
+
   /copy-libs
 
   install_package_no_space=`echo ${install_package} | sed 's/ /_/g'`

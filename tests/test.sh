@@ -12,7 +12,7 @@ echo $ID_LIKE | grep rhel && echo "Installing tar and gzip" && update-ca-trust &
 
 ARCH=`uname -m`
 
-echo $1 | base64 -d | sed -n 1'p' | tr ',' '\n' | while read packages; do 
+echo $1 | sed -n 1'p' | tr ',' '\n' | while read packages; do
 
   packages_no_space=`echo ${packages} | sed 's/ /_/g'`
   asset_filename="sensu-python-runtime_${asset_version}_python-${python_version}_with_${packages_no_space}-${platform}_linux_${ARCH}.tar.gz"
@@ -30,8 +30,7 @@ echo $1 | base64 -d | sed -n 1'p' | tr ',' '\n' | while read packages; do
     exit 1
   fi
 
-  #LD_LIBRARY_PATH="/build/lib:$LD_LIBRARY_PATH" /build/bin/python /tests/test_ssl_url.py
-  LD_LIBRARY_PATH="/build/lib:$LD_LIBRARY_PATH" [ "$(/build/bin/python --version)" = "Python 3.9.10" ] || (>&2 echo "Python version does not match"; exit 1)
+  LD_LIBRARY_PATH="/build/lib:$LD_LIBRARY_PATH" [ "$(/build/bin/python --version)" = "Python ${python_version}" ] || (>&2 echo "Python version does not match"; exit 1)
   if [ $? -ne 0 ]; then
     exit 1
   fi
@@ -47,7 +46,7 @@ echo $1 | base64 -d | sed -n 1'p' | tr ',' '\n' | while read packages; do
   fi
 
   # If there are packages, then run those tests too
-  
+
   echo ${packages} | tr ' ' '\n' | while read package; do
 
     LD_LIBRARY_PATH="/build/lib:$LD_LIBRARY_PATH" /build/bin/python /tests/test-${package}.py || (>&2 echo "Python package ${package} test failed"; exit 1)
@@ -58,5 +57,5 @@ echo $1 | base64 -d | sed -n 1'p' | tr ',' '\n' | while read packages; do
 
   cd /
   rm -r /build
-  
+
 done

@@ -8,7 +8,7 @@ ARG PLATFORM=
 
 # Switch APK repos to use http due to proxy issues
 RUN apk --no-cache add build-base gmp-dev zlib-dev bzip2-dev sqlite-dev gdbm-dev db-dev readline-dev libffi-dev coreutils yaml-dev linux-headers autoconf \
-  openssh-client openssl-dev libc6-compat \
+  openssh-client openssl-dev libc6-compat xz-dev \
   wget git sudo bash
 
 COPY scripts/pyenv-install-vanilla pyenv-install-vanilla

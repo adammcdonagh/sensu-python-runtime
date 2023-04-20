@@ -2,7 +2,7 @@
 
 # This assumes that you've built a sensu runtime package already
 # The sensu agent docker container runs on alpine, so needs that build
-PYTHON_VERSION=${1:-3.9.10}
+PYTHON_VERSION=${1:-3.11.2}
 SHA512=${2:-9a109f2c5f3d3f1db86cf076db65b4a433c2c9732981aac06e45f77ccf2ab4ac79260deea1c289b82a160bb5d90849a478d98f428c4dfdb595f4207966a32be9}
 echo $PYTHON_VERSION
 # Run docker compose
