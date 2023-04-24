@@ -102,6 +102,8 @@ jobs:
     if: github.event_name == 'push'
     needs: [build]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
