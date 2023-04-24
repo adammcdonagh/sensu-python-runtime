@@ -37,7 +37,8 @@ jobs:
         run: |
           echo "ARCH=$(echo ${{ matrix.platform }} | cut -d'-' -f2)" >> $GITHUB_ENV
           echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | cut -d'-' -f1)" >> $GITHUB_ENV
-          ASSET_VERSION=${GITHUB_REF_NAME:-local}
+          ASSET_VERSION=${GITHUB_SHA:0:7}
+          ASSET_VERSION=${ASSET_VERSION:-local}
           echo "ASSET_VERSION=${ASSET_VERSION}" >> $GITHUB_ENV
       - id: set-asset-image-name
         run: |
