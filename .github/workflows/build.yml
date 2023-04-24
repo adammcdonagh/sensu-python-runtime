@@ -87,15 +87,13 @@ jobs:
       - name: Tar/gz the contents of dist/*.tar.gz
         run: |
           tar -czvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz dist/*.tar.gz
-      - name: Upload asset artifact
+      - name: Upload asset to cache
         if: ${{ !env.ACT }} # Skip step if running locally
-        uses: actions/upload-artifact@v3
+        uses: actions/cache/save@v3
         with:
-          name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
+          key: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           path: dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
-          retention-days: 7
-          if-no-files-found: error
-  pull_artifacts:
+  pull_cache:
     if: github.event_name == 'release'
     needs: setup_matrix
     runs-on: ubuntu-latest
@@ -104,11 +102,11 @@ jobs:
         platform: ${{ fromJSON(needs.setup_matrix.outputs.matrix).platform }}
         package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
     steps:
-      - name: Download asset artifact
+      - name: Download asset cache
         if: ${{ !env.ACT }}
-        uses: actions/download-artifact@v3
+        uses: actions/cache/restore@v3
         with:
-          name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
+          key: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           path: dist/
       - name: Extract the asset tar.gz file
         if: ${{ !env.ACT }}
@@ -118,7 +116,7 @@ jobs:
   release:
     if: github.event_name == 'release'
     name: Release assets
-    needs: [setup_matrix, pull_artifacts]
+    needs: [setup_matrix, pull_cache]
     runs-on: ubuntu-latest
     permissions:
       contents: write
