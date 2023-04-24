@@ -38,7 +38,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Create release
+      - name: Add files to release
         uses: softprops/action-gh-release@v1
         with:
           draft: false

@@ -1,7 +1,7 @@
 name: Build Python Runtimes
 
 on:
-  push:
+  pull_request:
     tags:
       - "v*.*"
 
