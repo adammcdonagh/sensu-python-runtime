@@ -8,17 +8,17 @@ export PATH="$PYENV_ROOT/bin:$PATH" && \
 export PYENV_VERSION=${PYTHON_VERSION}
 
 # Load the Python env into the shell
-eval "$(pyenv init -)" 
-eval "$(pyenv init --path)" 
+eval "$(pyenv init -)"
+eval "$(pyenv init --path)"
 pyenv shell ${PYTHON_VERSION}
 if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo $1 | base64 -d | sed -n 1'p' | tr ',' '\n' | while read packages; do 
+echo $1 | tr ',' '\n' | while read packages; do
   echo "Installing packages: ${packages}"
   install_package=$packages
-  
+
   pip install ${install_package}  --trusted-host pypi.org --trusted-host files.pythonhosted.org
 
   # Prepare the build directories
@@ -43,11 +43,18 @@ echo $1 | base64 -d | sed -n 1'p' | tr ',' '\n' | while read packages; do
 
   mkdir -p /build/bin && mkdir -p /build/lib
 
+  # Clean up test files that we don't need
+  PYTHON_TEST_DIR=$(find /build/pyenv/versions/${PYTHON_VERSION} -name test -maxdepth 3)
+  rm -rf $PYTHON_TEST_DIR
+
+  # Find and delete any __pycache__ directories under /build
+  find /build -name __pycache__ -type d -exec rm -rf {} +
+
   /copy-libs
 
   install_package_no_space=`echo ${install_package} | sed 's/ /_/g'`
-  
-  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_with_${install_package_no_space}-${PLATFORM}_$(uname -s | tr '[:upper:]' '[:lower:]')_${ARCH}.tar.gz" 
+
+  export SENSU_ASSET="/assets/sensu-python-runtime_${ASSET_VERSION}_python-${PYTHON_VERSION}_with_${install_package_no_space}-${PLATFORM}_$(uname -s | tr '[:upper:]' '[:lower:]')_${ARCH}.tar.gz"
   tar -czf $SENSU_ASSET -C /build/ . && cd / && rm -rf /build
 
   # Tidy up ready for the next package

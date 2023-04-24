@@ -1,0 +1,14 @@
+{
+  "platform": [
+    "alpine-amd64"
+  ],
+  "docker_image": "alpine:latest",
+  "python_package_groups": [
+    {
+      "group_name": "requests",
+      "packages": [
+        "requests"
+      ]
+    }
+  ]
+}

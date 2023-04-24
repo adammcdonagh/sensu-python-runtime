@@ -1,0 +1,135 @@
+name: Build Python Runtimes
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: master
+  push:
+    branches: master
+
+env:
+  PYTHON_VERSION: "3.11.2"
+
+jobs:
+  setup_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: set-matrix
+        # Read the contents of the matrix.json file into the matrix variable
+        run: |
+          matrix=$(jq -Mc . matrix.json)
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+  build:
+    needs: setup_matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ fromJSON(needs.setup_matrix.outputs.matrix).platform }}
+        package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
+    env:
+      NATIVE_ARCH: "amd64"
+      docker_image: ${{ fromJSON(needs.setup_matrix.outputs.matrix).docker_image }}
+    steps:
+      - id: set-derived-env-vars
+        run: |
+          echo "ARCH=$(echo ${{ matrix.platform }} | cut -d'-' -f2)" >> $GITHUB_ENV
+          echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | cut -d'-' -f1)" >> $GITHUB_ENV
+          ASSET_VERSION=${GITHUB_SHA:0:7}
+          ASSET_VERSION=${ASSET_VERSION:-local}
+          echo "ASSET_VERSION=${ASSET_VERSION}" >> $GITHUB_ENV
+      - id: set-asset-image-name
+        run: |
+          echo "ASSET_IMAGE_NAME=sensu-python-runtime-${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}:${{ env.ASSET_VERSION }}" >> $GITHUB_ENV
+      - id: show-matrix
+        run: |
+          echo ${{ matrix.package_group.group_name }}
+          echo ${{ join(matrix.package_group.packages, ',') }}
+      - name: Set up QEMU # emulated architecture
+        if: ${{ env.ARCH != env.NATIVE_ARCH }}
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/${{ inputs.arch }}
+      - name: Set up Docker Buildx # emulated architecture
+        uses: docker/setup-buildx-action@v2
+        with:
+          platforms: linux/${{ env.ARCH }}
+      - uses: actions/checkout@v2
+      - name: Build image
+        uses: docker/build-push-action@v4
+        with:
+          platforms: linux/${{ env.ARCH }}
+          push: false
+          tags: ${{ env.ASSET_IMAGE_NAME }}
+          file: Dockerfile.${{ env.PLATFORM_NAME }}
+          context: .
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            PLATFORM=${{ env.PLATFORM_NAME }}
+            ASSET_VERSION=${{ env.ASSET_VERSION }}
+            PACKAGES=${{ join(matrix.package_group.packages, ',') }}
+          outputs: type=docker,dest=/tmp/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}.tar
+      - name: Load image
+        run: |
+          docker load --input /tmp/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}.tar
+      - name: Extract assets
+        run: |
+          docker run --rm -v ${PWD}/dist:/dist ${{ env.ASSET_IMAGE_NAME }} sh -c "cp /assets/* /dist/"
+      - name: Test assets
+        run: |
+          docker run --rm -e python_version=${{ env.PYTHON_VERSION }} -e platform=${{ env.PLATFORM_NAME }} \
+            -e test_platform=${{ env.docker_image }} -e asset_version=${{ env.ASSET_VERSION }} -v "${PWD}/tests/:/tests" -v "${PWD}/dist:/dist" \
+            ${{ env.ASSET_IMAGE_NAME }} /tests/test.sh ${{ join(matrix.package_group.packages, ',') }}
+      - name: Tar/gz the contents of dist/*.tar.gz
+        run: |
+          tar -czvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz dist/*.tar.gz
+      - name: Upload asset to cache
+        if: ${{ !env.ACT }} # Skip step if running locally
+        uses: actions/cache/save@v3
+        with:
+          key: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
+          path: dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
+  pull_cache:
+    if: github.event_name == 'push'
+    needs: setup_matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ fromJSON(needs.setup_matrix.outputs.matrix).platform }}
+        package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
+    steps:
+      - id: set-derived-env-vars
+        run: |
+          echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | cut -d'-' -f1)" >> $GITHUB_ENV
+          ASSET_VERSION=${GITHUB_REF_NAME:-local}
+          echo "ASSET_VERSION=${ASSET_VERSION}" >> $GITHUB_ENV
+      - name: Download asset cache
+        if: ${{ !env.ACT }}
+        uses: actions/cache/restore@v3
+        with:
+          key: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
+          path: dist/
+          fail-on-cache-miss: true
+      - name: Extract the asset tar.gz file
+        if: ${{ !env.ACT }}
+        run: |
+          tar -xvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz -C dist/
+          rm dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
+  release:
+    if: github.event_name == 'push'
+    name: Release assets
+    needs: [setup_matrix, pull_cache]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Add files to release
+        if: ${{ !env.ACT }}
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          files: dist/*.tar.gz
+          generate_release_notes: true

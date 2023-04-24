@@ -1,6 +1,6 @@
-FROM amazonlinux:latest
+FROM centos:7
 
-LABEL name="sensu/sensu-python-runtime-amzn2"
+LABEL name="sensu/sensu-python-runtime-rhel"
 ARG ASSET_VERSION=local_build
 ARG PYTHON_VERSION=3.9.10
 ARG PACKAGES=

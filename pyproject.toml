@@ -1,2 +1,23 @@
-[tool.black]
-line-length = 120
+[project]
+name = "sensu-python-runtime"
+version = "0.0.1"
+
+[project.optional-dependencies]
+dev = [
+  "flake8",
+  "black >= 23.1.0",
+  "flake8-bugbear",
+  "pep8-naming",
+  "flake8-use-fstring",
+  "flake8-black",
+  "isort",
+  "flake8-isort",
+  "pytest",
+  "bumpver",
+  "pytest-shell",
+  "lovely-pytest-docker",
+  "pre-commit"
+]
+
+[tool.isort]
+profile = 'black'
