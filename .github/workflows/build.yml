@@ -3,9 +3,9 @@ name: Build Python Runtimes
 on:
   pull_request:
     types: [opened, synchronize]
-    branches: main
+    branches: master
   push:
-    branches: main
+    branches: master
 
 env:
   PYTHON_VERSION: "3.11.2"
