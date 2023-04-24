@@ -51,8 +51,8 @@ jobs:
       - name: temp create dummy zips
         run: |
           mkdir -p dist
-          touch dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_vanilla_86_64.tar.gz
-          touch dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_with_requests_x86_64.tar.gz
+          echo "rubbish" > dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_vanilla_86_64.tar.gz
+          echo "rubbish" > dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_with_requests_x86_64.tar.gz
 
       # - name: Set up QEMU # emulated architecture
       #   if: ${{ env.ARCH != env.NATIVE_ARCH }}

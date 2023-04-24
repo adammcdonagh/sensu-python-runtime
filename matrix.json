@@ -1,6 +1,7 @@
 {
   "platform": [
-    "alpine-amd64"
+    "alpine-amd64",
+    "alpine-arm64"
   ],
   "docker_image": "alpine:latest",
   "python_package_groups": [
