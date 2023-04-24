@@ -1,5 +1,11 @@
 # EXPERIMENTAL Sensu Go Python Runtime Assets
-[![Build Status](https://travis-ci.org/jspaleta/sensu-python-runtime.svg?branch=master)](https://travis-ci.org/jspaleta/sensu-python-runtime)
+
+## Workflow
+
+  1. Push as many commits as you want. When it's time to build, tag the commit and push it
+  2. Wait for the GitHub Actions to run and verify the work successfully, and build the assets
+  3. Do a PR to merge into main
+  4. Create a release. Then wait for the action to run to upload the assets
 
 This project provides [Sensu Go Assets][sensu-assets] containing portable Python
 runtimes (for various platforms), based on the excellent [pyenv project][pyenv]. In practice, this Python runtime asset should allow
@@ -145,4 +151,3 @@ Please note the following instructions:
 
 ## Building Python Assets that need additional modules
 The Python runtime includes a basic set of standard python modules. If you want to use a python script that requires additional modules, you can package those additional modules with your script in an asset. However you will need to use a wrapper script that set the python module search path correctly.  Please take a look at [packaging python modules](docs/building_assets.md) for detailed instructions on steps to take.
-   

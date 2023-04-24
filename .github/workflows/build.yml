@@ -84,12 +84,15 @@ jobs:
           docker run --rm -e python_version=${{ env.PYTHON_VERSION }} -e platform=${{ env.PLATFORM_NAME }} \
             -e test_platform=${{ env.docker_image }} -e asset_version=${{ env.ASSET_VERSION }} -v "${PWD}/tests/:/tests" -v "${PWD}/dist:/dist" \
             ${{ env.ASSET_IMAGE_NAME }} /tests/test.sh ${{ join(matrix.package_group.packages, ',') }}
+      - name: Tar/gz the contents of dist/*.tar.gz
+        run: |
+          tar -czvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz dist/*.tar.gz
       - name: Upload asset artifact
         if: ${{ !env.ACT }} # Skip step if running locally
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
-          path: dist/*.tar.gz
+          path: dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           retention-days: 7
           if-no-files-found: error
   pull_artifacts:
@@ -107,6 +110,10 @@ jobs:
         with:
           name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           path: dist/
+      - name: Extract the asset tar.gz file
+        run: |
+          tar -xvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz -C dist/
+          rm dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
   release:
     if: github.event_name == 'release'
     name: Release assets
