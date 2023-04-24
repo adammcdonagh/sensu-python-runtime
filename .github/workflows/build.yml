@@ -2,8 +2,6 @@ name: Build Python Runtimes
 
 on:
   pull_request:
-    tags:
-      - "v*.*"
 
 env:
   PYTHON_VERSION: "3.11.2"
