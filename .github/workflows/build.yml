@@ -126,6 +126,7 @@ jobs:
     steps:
       - id: set-derived-env-vars
         run: |
+          echo "ARCH=$(echo ${{ matrix.platform }} | cut -d'-' -f2)" >> $GITHUB_ENV
           echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | cut -d'-' -f1)" >> $GITHUB_ENV
           ASSET_VERSION=${GITHUB_SHA:0:7}
           ASSET_VERSION=${ASSET_VERSION:-local}
