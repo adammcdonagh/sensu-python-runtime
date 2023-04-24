@@ -134,7 +134,7 @@ jobs:
         if: ${{ !env.ACT }}
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
+          name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}-${{ env.ARCH }}
           path: dist/
       - name: Extract the asset tar.gz file
         if: ${{ !env.ACT }}
