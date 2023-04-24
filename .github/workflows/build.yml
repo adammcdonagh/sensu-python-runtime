@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - "v*.*"
+  release:
+    types: [created]
+    tags:
+      - "v*.*"
 
 env:
   PYTHON_VERSION: "3.11.2"
@@ -21,6 +25,7 @@ jobs:
           matrix=$(jq -Mc . matrix.json)
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   build:
+    if: github.event_name == 'push'
     needs: setup_matrix
     runs-on: ubuntu-latest
     strategy:
@@ -87,3 +92,33 @@ jobs:
           path: dist/*.tar.gz
           retention-days: 7
           if-no-files-found: error
+  pull_artifacts:
+    if: github.event_name == 'release'
+    needs: setup_matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ fromJSON(needs.setup_matrix.outputs.matrix).platform }}
+        package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
+    steps:
+      - name: Download asset artifact
+        if: ${{ !env.ACT }} # Skip step if running locally
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
+          path: dist/
+  release:
+    if: github.event_name == 'release'
+    name: Release assets
+    needs: [setup_matrix, pull_artifacts]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Add files to release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          files: dist/*.tar.gz
+          generate_release_notes: true
