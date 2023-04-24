@@ -96,7 +96,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
   pull_artifacts:
-    if: ${{ github.event_name == 'release' && !env.ACT }}
+    if: github.event_name == 'release'
     needs: setup_matrix
     runs-on: ubuntu-latest
     strategy:
@@ -105,16 +105,18 @@ jobs:
         package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
     steps:
       - name: Download asset artifact
+        if: ${{ !env.ACT }}
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           path: dist/
       - name: Extract the asset tar.gz file
+        if: ${{ !env.ACT }}
         run: |
           tar -xvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz -C dist/
           rm dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
   release:
-    if: ${{ github.event_name == 'release' && !env.ACT }}
+    if: github.event_name == 'release'
     name: Release assets
     needs: [setup_matrix, pull_artifacts]
     runs-on: ubuntu-latest
@@ -122,6 +124,7 @@ jobs:
       contents: write
     steps:
       - name: Add files to release
+        if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v1
         with:
           draft: false
