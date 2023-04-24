@@ -124,7 +124,7 @@ jobs:
         if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ ASSET_VERSION }}
+          tag_name: ${{ env.ASSET_VERSION }}
           draft: true
           prerelease: true
           files: dist/*.tar.gz
