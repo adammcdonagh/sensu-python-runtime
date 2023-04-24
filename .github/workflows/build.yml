@@ -102,6 +102,11 @@ jobs:
         platform: ${{ fromJSON(needs.setup_matrix.outputs.matrix).platform }}
         package_group: ${{ fromJSON(needs.setup_matrix.outputs.matrix).python_package_groups }}
     steps:
+      - id: set-derived-env-vars
+        run: |
+          echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | cut -d'-' -f1)" >> $GITHUB_ENV
+          ASSET_VERSION=${GITHUB_REF_NAME:-local}
+          echo "ASSET_VERSION=${ASSET_VERSION}" >> $GITHUB_ENV
       - name: Download asset cache
         if: ${{ !env.ACT }}
         uses: actions/cache/restore@v3
