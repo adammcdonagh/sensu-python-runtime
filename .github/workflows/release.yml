@@ -12,6 +12,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - uses: actions/checkout@v2
       - id: set-matrix
         # Read the contents of the matrix.json file into the matrix variable
         run: |
