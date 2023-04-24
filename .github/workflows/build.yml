@@ -6,6 +6,7 @@ on:
     branches: master
   push:
     branches: master
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.11.2"
@@ -86,15 +87,17 @@ jobs:
         run: |
           tar -czvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz dist/*.tar.gz
       - name: Upload asset to cache
-        if: ${{ !env.ACT }} # Skip step if running locally
+        if: github.event_name == 'push'
         uses: actions/cache/save@v3
         with:
           key: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           path: dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
   pull_cache:
     if: github.event_name == 'push'
-    needs: setup_matrix
+    needs: [setup_matrix, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
       matrix:
         platform: ${{ fromJSON(needs.setup_matrix.outputs.matrix).platform }}
@@ -103,7 +106,8 @@ jobs:
       - id: set-derived-env-vars
         run: |
           echo "PLATFORM_NAME=$(echo ${{ matrix.platform }} | cut -d'-' -f1)" >> $GITHUB_ENV
-          ASSET_VERSION=${GITHUB_REF_NAME:-local}
+          ASSET_VERSION=${GITHUB_SHA:0:7}
+          ASSET_VERSION=${ASSET_VERSION:-local}
           echo "ASSET_VERSION=${ASSET_VERSION}" >> $GITHUB_ENV
       - name: Download asset cache
         if: ${{ !env.ACT }}
@@ -117,19 +121,11 @@ jobs:
         run: |
           tar -xvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz -C dist/
           rm dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
-  release:
-    if: github.event_name == 'push'
-    name: Release assets
-    needs: [setup_matrix, pull_cache]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
       - name: Add files to release
         if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v1
         with:
-          draft: false
-          prerelease: false
+          draft: true
+          prerelease: true
           files: dist/*.tar.gz
           generate_release_notes: true
