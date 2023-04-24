@@ -1,13 +1,11 @@
 name: Build Python Runtimes
 
 on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: main
   push:
-    tags:
-      - "v*.*"
-  release:
-    types: [created]
-    tags:
-      - "v*.*"
+    branches: main
 
 env:
   PYTHON_VERSION: "3.11.2"
@@ -25,7 +23,6 @@ jobs:
           matrix=$(jq -Mc . matrix.json)
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
   build:
-    if: github.event_name == 'push'
     needs: setup_matrix
     runs-on: ubuntu-latest
     strategy:
@@ -94,7 +91,7 @@ jobs:
           key: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           path: dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
   pull_cache:
-    if: github.event_name == 'release'
+    if: github.event_name == 'push'
     needs: setup_matrix
     runs-on: ubuntu-latest
     strategy:
@@ -113,13 +110,14 @@ jobs:
         with:
           key: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}
           path: dist/
+          fail-on-cache-miss: true
       - name: Extract the asset tar.gz file
         if: ${{ !env.ACT }}
         run: |
           tar -xvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz -C dist/
           rm dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
   release:
-    if: github.event_name == 'release'
+    if: github.event_name == 'push'
     name: Release assets
     needs: [setup_matrix, pull_cache]
     runs-on: ubuntu-latest
