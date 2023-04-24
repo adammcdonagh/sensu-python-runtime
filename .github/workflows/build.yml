@@ -101,6 +101,7 @@ jobs:
   create_release:
     if: github.event_name == 'push'
     needs: [build]
+    runs-on: ubuntu-latest
     steps:
       - name: Create release
         if: ${{ !env.ACT }}
@@ -111,7 +112,7 @@ jobs:
           generate_release_notes: true
   upload_assets:
     if: github.event_name == 'push'
-    needs: [setup_matrixm create_release]
+    needs: [setup_matrix, create_release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
