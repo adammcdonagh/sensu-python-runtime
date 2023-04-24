@@ -111,9 +111,8 @@ jobs:
           fetch-depth: 0
       - name: Push new release
         run: |
-          previous=$(gh release list --exclude-drafts --exclude-pre-releases --limit 999 | grep Latest | awk '{print $3}')
           release="${GITHUB_SHA:0:7}"
-          gh release create ${release} --title ${release} --generate-notes --notes-start-tag ${previous}
+          gh release create ${release} --title ${release}
   upload_assets:
     if: github.event_name == 'push'
     needs: [setup_matrix, create_release]
