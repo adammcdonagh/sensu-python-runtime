@@ -51,8 +51,8 @@ jobs:
       - name: temp create dummy zips
         run: |
           mkdir -p dist
-          echo "rubbish" > dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_vanilla_86_64.tar.gz
-          echo "rubbish" > dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_with_requests_x86_64.tar.gz
+          echo "rubbish" > dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_vanilla_${{ env.ARCH }}.tar.gz
+          echo "rubbish" > dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}_with_requests_${{ env.ARCH }}.tar.gz
 
       # - name: Set up QEMU # emulated architecture
       #   if: ${{ env.ARCH != env.NATIVE_ARCH }}
@@ -126,13 +126,20 @@ jobs:
         run: |
           tar -xvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
           rm dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
-      - name: Add files to release
+      - name: Create release
         if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.ASSET_VERSION }}
           draft: true
           prerelease: true
-          files: dist/*.tar.gz
           generate_release_notes: true
-          fail_on_unmatched_files: true
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          release_name: ${{ env.ASSET_VERSION }}
+          file: dist/*.tar.gz
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "This is my release text"
