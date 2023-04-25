@@ -171,6 +171,8 @@ jobs:
       # Download all assets attached to the last release
       - name: Download release assets
         run: |
+          mkdir dist
+          cd dist
           gh release download -p '*.tar.gz'
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -180,4 +182,5 @@ jobs:
           aws-region: eu-west-1
       - name: Upload assets to S3
         run: |
-          aws s3 sync ${{ env.PYTHON_VERSION }}-*.tar.gz s3://em-sensu-python-runtime-${{ matrix.environment }}/
+          cd dist
+          aws s3 sync . s3://em-sensu-python-runtime-${{ matrix.environment }}/
