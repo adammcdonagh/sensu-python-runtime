@@ -171,7 +171,7 @@ jobs:
       # Download all assets attached to the last release
       - name: Download release assets
         run: |
-          mkdir dist
+          mkdir -p dist
           cd dist
           gh release download -p '*.tar.gz'
       - name: Configure AWS Credentials
