@@ -176,7 +176,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::${{ vars.ACCOUNT_ID }}:role/sensu-assets-role
+          role-session-name: samplerolesession
           aws-region: eu-west-1
       - name: Upload assets to S3
         run: |
-          aws s3 sync ${{ env.PYTHON_VERSION }}-*-${{ env.ASSET_VERSION }}_*.tar.gz s3://em-sensu-python-runtime-${{ matrix.environment }}/
+          aws s3 sync ${{ env.PYTHON_VERSION }}-*.tar.gz s3://em-sensu-python-runtime-${{ matrix.environment }}/
