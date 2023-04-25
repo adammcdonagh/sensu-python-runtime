@@ -5,7 +5,9 @@
   1. Push as many commits as you want. When it's time to build, tag the commit and push it
   2. Wait for the GitHub Actions to run and verify the work successfully, and build the assets
   3. Do a PR to merge into main
-  4. Create a release. Then wait for the action to run to upload the assets
+
+
+# git push origin v1.3.2
 
 This project provides [Sensu Go Assets][sensu-assets] containing portable Python
 runtimes (for various platforms), based on the excellent [pyenv project][pyenv]. In practice, this Python runtime asset should allow
