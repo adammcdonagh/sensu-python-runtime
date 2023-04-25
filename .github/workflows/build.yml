@@ -115,7 +115,7 @@ jobs:
   #         gh release create ${release} --title ${release}
   upload_assets:
     if: github.event_name == 'push'
-    needs: [setup_matrix, create_release]
+    needs: [setup_matrix]
     runs-on: ubuntu-latest
     permissions:
       contents: write
