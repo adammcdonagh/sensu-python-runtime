@@ -171,7 +171,7 @@ jobs:
       # Download all assets attached to the last release
       - name: Download release assets
         run: |
-          gh release download -p '${{ env.PYTHON_VERSION }}-*-${{ env.ASSET_VERSION }}_*.tar.gz'
+          gh release download -p '*.tar.gz'
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
