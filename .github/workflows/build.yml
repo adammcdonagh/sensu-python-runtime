@@ -148,7 +148,7 @@ jobs:
           release_name: ${{ env.ASSET_VERSION }}
           file: dist/*.tar.gz
           file_glob: true
-          tag: ${{ github.ref }}
+          tag: ${{ env.ASSET_VERSION }}
           overwrite: true
   deploy:
     if: github.event_name == 'push'
