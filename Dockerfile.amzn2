@@ -8,7 +8,7 @@ ARG PLATFORM=
 
 ARG GREP_EXCLUDE='(ld.so|ld-linux-x86-64.so|libBrokenLocale.so|libSegFault.so|libanl.so|libc.so|libdl.so|libm.so|libmvec.so|libnss_compat.so|libnss_dns.so|libnss_files.so|libpthread.so|libresolv.so|librt.so|libthread_db.so|libutil.so|vdso.so)'
 
-RUN yum update -y && yum install -y curl gcc make bzip2-devel zlib-devel sqlite-devel openssl-devel readline-devel curl tar gzip git bash
+RUN yum update -y && yum install -y curl gcc make bzip2-devel zlib-devel sqlite-devel libffi-devel openssl-devel readline-devel curl tar gzip git bash
 
 COPY scripts/pyenv-install-vanilla pyenv-install-vanilla
 COPY scripts/pyenv-install         pyenv-install
