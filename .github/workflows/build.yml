@@ -98,21 +98,21 @@ jobs:
         with:
           name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}-${{ env.ARCH }}
           path: dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz
-  create_release:
-    if: github.event_name == 'push'
-    needs: [build]
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Push new release
-        run: |
-          release="${GITHUB_SHA:0:7}"
-          gh release create ${release} --title ${release}
+  # create_release:
+  #   if: github.event_name == 'push'
+  #   needs: [build]
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     GH_TOKEN: ${{ github.token }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Push new release
+  #       run: |
+  #         release="${GITHUB_SHA:0:7}"
+  #         gh release create ${release} --title ${release}
   upload_assets:
     if: github.event_name == 'push'
     needs: [setup_matrix, create_release]
@@ -150,4 +150,29 @@ jobs:
           file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
-          body: "This is my release text"
+  deploy:
+    if: github.event_name == 'push'
+    needs: [setup_matrix, upload_assets]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # required to retrieve the aws credentials
+    env:
+      GH_TOKEN: ${{ github.token }}
+    strategy:
+      matrix:
+        # environment: [dev, test, prod]
+        environment: [dev]
+    environment: ${{ matrix.environment }}
+    steps:
+      # Download all assets attached to the last release
+      - name: Download release assets
+        run: |
+          gh release download -p '${{ env.PYTHON_VERSION }}-*-${{ env.ASSET_VERSION }}_*.tar.gz'
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.ACCOUNT_ID }}:role/sensu-assets-role
+          aws-region: eu-west-1
+      - name: Upload assets to S3
+        run: |
+          aws s3 sync ${{ env.PYTHON_VERSION }}-*-${{ env.ASSET_VERSION }}_*.tar.gz s3://em-sensu-python-runtime-${{ matrix.environment }}/
