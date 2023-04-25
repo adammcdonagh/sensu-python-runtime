@@ -36,6 +36,7 @@ jobs:
     env:
       NATIVE_ARCH: "amd64"
     steps:
+      - uses: actions/checkout@v3
       - id: set-derived-env-vars
         name: Set derived env vars
         run: |
@@ -70,7 +71,6 @@ jobs:
         uses: docker/setup-buildx-action@v2
         with:
           platforms: linux/${{ env.ARCH }}
-      - uses: actions/checkout@v3
       - name: Build image
         uses: docker/build-push-action@v4
         with:
@@ -97,10 +97,11 @@ jobs:
             -e test_platform=${{ env.docker_image }} -e asset_version=${{ env.ASSET_VERSION }} -v "${PWD}/tests/:/tests" -v "${PWD}/dist:/dist" \
             ${{ env.ASSET_IMAGE_NAME }} /tests/test.sh ${{ join(matrix.package_group.packages, ',') }}
       - name: Tar/gz the contents of dist/*.tar.gz
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         run: |
           tar -czvf dist/${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}.tar.gz dist/*.tar.gz
       - name: Upload asset to cache
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.PYTHON_VERSION }}-${{ env.PLATFORM_NAME }}-${{ env.ASSET_VERSION }}-${{ env.ARCH }}
