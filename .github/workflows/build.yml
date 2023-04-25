@@ -177,7 +177,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::${{ vars.ACCOUNT_ID }}:role/sensu-assets-role
+          role-to-assume: arn:aws:iam::${{ vars.ACCOUNT_ID }}:role/sensu-assets-role-${{ matrix.environment }}env
           role-session-name: OIDCSession
           aws-region: eu-west-1
       - name: Upload assets to S3
