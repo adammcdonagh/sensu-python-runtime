@@ -20,11 +20,11 @@
     },
     {
       "platform": "amzn2-amd64",
-      "python_version": "3.9.10"
+      "python_version": "3.9.16"
     },
     {
       "platform": "centos7-amd64",
-      "python_version": "3.9.10"
+      "python_version": "3.9.16"
     },
     {
       "platform": "rhel8-amd64",
