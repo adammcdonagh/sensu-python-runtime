@@ -161,7 +161,7 @@ jobs:
     strategy:
       matrix:
         # environment: [dev, test, prod]
-        environment: [dev]
+        environment: [dev, test]
     environment: ${{ matrix.environment }}
     steps:
       - name: Checkout code
