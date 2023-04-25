@@ -119,8 +119,8 @@ jobs:
           fetch-depth: 0
       - name: Push new release
         run: |
-          release="${GITHUB_SHA:0:7}"
-          gh release create ${release} --title ${release}
+          TAG_NAME=$(echo ${{ github.ref }} | sed 's/refs\/tags\///')
+          gh release create ${TAG_NAME} --title ${TAG_NAME}
   upload_assets:
     if: github.event_name == 'push'
     needs: [setup_matrix, create_release]
@@ -141,6 +141,8 @@ jobs:
           ASSET_VERSION=${GITHUB_SHA:0:7}
           ASSET_VERSION=${ASSET_VERSION:-local}
           echo "ASSET_VERSION=${ASSET_VERSION}" >> $GITHUB_ENV
+          TAG_NAME=$(echo ${{ github.ref }} | sed 's/refs\/tags\///')
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
       - name: Download asset cache
         if: ${{ !github.event.act }}
         uses: actions/download-artifact@v3
@@ -155,10 +157,8 @@ jobs:
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
-          release_name: ${{ env.ASSET_VERSION }}
           file: dist/*.tar.gz
           file_glob: true
-          tag: ${{ env.ASSET_VERSION }}
           overwrite: true
   deploy:
     if: github.event_name == 'push'
