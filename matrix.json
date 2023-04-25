@@ -1,15 +1,34 @@
 {
   "platform": [
     "alpine-amd64",
-    "alpine-arm64"
+    "amzn2-amd64",
+    "centos7-amd64",
+    "rhel8-amd64"
   ],
-  "docker_image": "alpine:latest",
   "python_package_groups": [
     {
       "group_name": "requests",
       "packages": [
         "requests"
       ]
+    }
+  ],
+  "include": [
+    {
+      "platform": "alpine-amd64",
+      "python_version": "3.11.3"
+    },
+    {
+      "platform": "amzn2-amd64",
+      "python_version": "3.9.16"
+    },
+    {
+      "platform": "centos7-amd64",
+      "python_version": "3.9.16"
+    },
+    {
+      "platform": "rhel8-amd64",
+      "python_version": "3.11.3"
     }
   ]
 }
