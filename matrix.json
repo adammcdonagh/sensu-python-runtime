@@ -11,6 +11,12 @@
       "packages": [
         "requests"
       ]
+    },
+    {
+      "group_name": "boto3",
+      "packages": [
+        "boto3"
+      ]
     }
   ],
   "include": [
